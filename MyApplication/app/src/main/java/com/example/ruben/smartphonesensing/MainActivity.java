@@ -20,6 +20,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.xmlpull.v1.XmlSerializer;
+
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -60,7 +62,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private double amount = 0;
     private boolean runWindows = false;
     private Handler handler = null;
-    private ArrayList<ActivityDataPoint> activityDataPoints = new ArrayList<ActivityDataPoint>();
+    private ActivityAnalyzer activityAnalyzer;
 
     private TextView currentX, currentY, currentZ, titleAcc, textRssi, acceleration, activity;
     private CheckBox train;
@@ -85,6 +87,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         train = (CheckBox) findViewById(R.id.train);
         trainStanding = (RadioButton) findViewById(R.id.trainStanding);
         trainWalking = (RadioButton) findViewById(R.id.trainWalking);
+        activityAnalyzer = new ActivityAnalyzer();
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
@@ -98,12 +101,6 @@ public class MainActivity extends Activity implements SensorEventListener {
             final Runnable r = new Runnable(){
                 @Override
                 public void run(){
-                    //if(maxA - minA > 4)
-                    //    activity.setText("Walking");
-                    //else
-                    //    activity.setText("Standing");
-                    //acceleration.setText(Double.toString(maxA-minA));
-                    System.out.println("In loop");
                     double meanAcceleration = sum/amount;
                     double maxMinDifference = maxA-minA;
                     String label = "";
@@ -112,33 +109,15 @@ public class MainActivity extends Activity implements SensorEventListener {
                             label = "Standing";
                         if(trainWalking.isChecked())
                             label = "Walking";
-                        ActivityDataPoint adp = new ActivityDataPoint(meanAcceleration, maxMinDifference, label);
-                        activityDataPoints.add(adp);
-                        System.out.println("Add training point");
+
+                        activityAnalyzer.addNewActivityDataPoint(meanAcceleration, maxMinDifference, label);
                     }
                     else{
-                        for(ActivityDataPoint adp: activityDataPoints){
-                            adp.SetCurrentSituation(meanAcceleration, maxMinDifference);
-                        }
-                        Collections.sort(activityDataPoints);
+                        activityAnalyzer.setCurrentSituation(meanAcceleration, maxMinDifference);
                         int K = 5;
-                        if (activityDataPoints.size() >= K){
-                            System.out.println("Enough training points");
-                            int standingPoints = 0;
-                            int walkingPoints = 0;
-
-                            for(int i = 0; i < K; i++) {
-                                if(activityDataPoints.get(i).activityLabel.equals("Standing"))
-                                    standingPoints++;
-                                if(activityDataPoints.get(i).activityLabel.equals("Walking"))
-                                    walkingPoints++;
-                            }
-
-                            if(standingPoints > walkingPoints)
-                                activity.setText("Standing");
-                            else if(standingPoints < walkingPoints)
-                                activity.setText("Walking");
-                        }
+                        String activityLabel = activityAnalyzer.getActivity(K);
+                        if(activityLabel != null)
+                            activity.setText(activityLabel);
                     }
 
                     sum = 0;

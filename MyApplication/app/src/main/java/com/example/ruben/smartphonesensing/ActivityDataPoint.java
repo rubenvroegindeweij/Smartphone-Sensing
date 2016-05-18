@@ -7,24 +7,18 @@ public class ActivityDataPoint implements Comparable<ActivityDataPoint>{
     private double meanAcceleration;
     private double maxMinDifference;
     public String activityLabel;
-    private double currentMean;
-    private double currentDiff;
-    public ActivityDataPoint(double mean, double diff, String label) {
+    private ActivityAnalyzer activityAnalyzer;
+
+    public ActivityDataPoint(double mean, double diff, String label, ActivityAnalyzer activityAnalyzer) {
         meanAcceleration = mean;
         maxMinDifference = diff;
         activityLabel = label;
-        currentMean = 0;
-        currentDiff = 0;
-    }
-
-    public void SetCurrentSituation(double mean, double diff){
-        currentMean = mean;
-        currentDiff = diff;
+        this.activityAnalyzer = activityAnalyzer;
     }
 
     public double Distance(){
-        double meanDiff = currentMean - meanAcceleration;
-        double diffDiff = currentDiff - maxMinDifference;
+        double meanDiff = activityAnalyzer.currentMeanAcceleration - meanAcceleration;
+        double diffDiff = activityAnalyzer.currentMaxMinDifference - maxMinDifference;
         double distance = Math.sqrt(meanDiff*meanDiff+diffDiff*diffDiff);
         return distance;
     }
@@ -37,5 +31,10 @@ public class ActivityDataPoint implements Comparable<ActivityDataPoint>{
             return -1;
         else
             return 0;
+    }
+
+    @Override
+    public String toString(){
+        return activityLabel;
     }
 }
